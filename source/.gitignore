@@ -1,0 +1,6 @@
+Inference/images/
+Pretrain/resnet18-5c106cde.pth
+Pretrain/resnet50-19c8e357.pth
+logging/
+venv/
+__pycache__/

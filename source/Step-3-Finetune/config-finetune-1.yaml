@@ -1,0 +1,51 @@
+task_name: 'finetune-itc'
+task_phase: 1
+
+# Model
+top_k: 5
+
+# Seed
+seed: 42
+deterministic: False
+
+# Paths
+images_path: 'logging/{uuid}/images/'
+logging_path: 'logging/{uuid}/logging/'
+checkpoint_path: 'logging/{uuid}/checkpoint/'
+pretrain_path: 'logging/pretrain/'
+
+# Checkpoints
+# pretrain_step_1: '<step-1-itc-attention checkpoint path>'
+pretrain_step_1: 'checkpoint-itc-attentioner.pth.tar'
+# pretrain_step_2: '<step-2-mfd-attention checkpoint path>'
+pretrain_step_2: 'checkpoint-mfd-attentioner.pth.tar'
+
+checkpoint_resnet: 'resnet18-5c106cde.pth'
+checkpoint_ft_itc: 'checkpoint-finetune-itc.pth.tar'
+checkpoint_optm: 'checkpoint-optm-finetune-1.pth.tar'
+
+# Dataset
+dataset_worker_num: 6
+
+dataset_train_path: '/files/ComputeData/ILSVRC2012/ILSVRC2012_image_train_lmdb/'
+dataset_valid_path: '/files/ComputeData/ILSVRC2012/ILSVRC2012_image_valid_lmdb/'
+
+cudnn_benchmark: True
+batch_size: 16
+
+# Training
+epochs: 2
+learning_rate: 0.01
+
+loss_weights: [0.495, 0.005, 0.5]
+
+smoother_kernel: 7
+variance_kernel: 7
+
+# Logging
+logging_interval: 100
+heavy_logging_interval: 1000
+valid_images_save_num: 2
+
+# Steganography
+fusion_algorithm: 'mean'  # availables: min, max, mean

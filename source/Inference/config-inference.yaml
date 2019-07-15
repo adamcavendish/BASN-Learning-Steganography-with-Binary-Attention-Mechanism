@@ -1,0 +1,37 @@
+task_name: 'EmbeddingInference'
+task_phase: 1
+
+debug: False
+
+# Model
+top_k: 5
+
+# Seed
+seed: 42
+deterministic: False
+
+# Paths
+input_images_path: 'images'
+
+images_path: 'logging/{uuid}/images/'
+logging_path: 'logging/{uuid}/logging/'
+pretrain_path: 'logging/pretrain/'
+
+hidden_message_path: 'messages/shakespeare.7z'
+
+# Checkpoints
+checkpoint_step_1: 'step-1-variance-minimization-1542086958-finetune_mean.pth.tar'
+checkpoint_step_2: 'step-2-feature-similarity-1540089577.pth.tar'
+
+# Dataset
+dataset_worker_num: 2
+
+dataset_train_path: '/files/ComputeData/ILSVRC2012/ILSVRC2012_image_train_lmdb/'
+dataset_valid_path: '/files/ComputeData/ILSVRC2012/ILSVRC2012_image_valid_lmdb/'
+
+cudnn_benchmark: True
+batch_size: 32
+
+# Steganography
+ignore_lsb_num: 2
+fusion_algorithm: 'mean'  # availables: min, max, mean

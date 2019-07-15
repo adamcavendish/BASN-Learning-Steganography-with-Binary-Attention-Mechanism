@@ -1,0 +1,38 @@
+task_name: 'itc-attention'
+task_phase: 1
+
+# Model
+top_k: 5
+
+# Seed
+seed: 42
+deterministic: True
+
+# Paths
+checkpoint_path: 'checkpoint'
+checkpoint_attentioner: 'checkpoint-attentioner.pth.tar'
+checkpoint_optm: 'checkpoint-optm-phase-1.pth.tar'
+logging_path: 'logging'
+
+# Dataset
+dataset_worker_num: 6
+
+dataset_train_path: '/files/ComputeData/ILSVRC2012/ILSVRC2012_image_train_lmdb/'
+dataset_valid_path: '/files/ComputeData/ILSVRC2012/ILSVRC2012_image_valid_lmdb/'
+
+# Training
+epochs: 3
+learning_rate: 0.01
+
+alpha: 0.99
+smoother_kernel: 7
+variance_kernel: 7
+
+cudnn_benchmark: True
+
+batch_size: 32
+
+# Logging
+logging_interval: 100
+heavy_logging_interval: 500
+valid_images_save_num: 20
