@@ -1,0 +1,46 @@
+\documentclass[12pt,a4paper]{article}
+\pdfoutput=1
+
+\usepackage{soul}
+\usepackage{url}
+\usepackage[utf8]{inputenc}
+\usepackage[small]{caption}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\usepackage{subcaption}
+
+\usepackage{hyperref}
+\hypersetup{
+    pdftex,
+    pdftitle={BASN --- Learning Steganography with Binary Attention Mechanism},
+    pdfauthor={Yang Yang},
+    pdfsubject={BASN --- Learning Steganography with Binary Attention Mechanism},
+    pdfkeywords={convolutional neural network, steganography, attention mechanism},
+    bookmarksnumbered=true,
+    bookmarksopen=true,
+    colorlinks=true,
+    pdfstartview=Fit,
+    pdfpagemode=UseOutlines,
+}
+
+\input{tex/00-macros.tex}
+\input{tex/01-title-author.tex}
+
+\begin{document}
+\maketitle
+
+\input{tex/02-abstract.tex}
+\input{tex/03-introduction.tex}
+\input{tex/05-binary-attention.tex}
+\input{tex/06-fusion-and-finetune.tex}
+\input{tex/07-experiments.tex}
+\input{tex/08-conclusion.tex}
+
+\bibliographystyle{plain}
+\bibliography{main}
+
+\end{document}

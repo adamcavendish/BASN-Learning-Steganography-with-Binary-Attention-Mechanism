@@ -1,0 +1,56 @@
+\section{Experiments}
+
+\subsection{Experiments Configurations}
+
+To demonstrate the effectiveness of our model, we conducted experiments on ImageNet dataset~\cite{ImageNet}. Specially, ILSVRC2012 dataset with 1,281,167 images is used for training and 50,000 for testing. Our work is trained on one NVidia GTX1080 GPU and we adopt a batch size of 32 for all models. Optimizers and learning rate setup for ITC model, MFD model \(1^{st}\) phase and MFD model \(2^{nd}\) phase are Adam optimizer~\cite{Adam} with 0.01, Nesterov momentum optimizer~\cite{Nesterov} with 1e-5 and Adam optimizer with 0.01 respectively.
+
+All the validation processes use the compressed version of \textit{The Complete Works of William Shakespeare}~\cite{Shakespeare} provided by Project Gutenberg~\cite{Gutenberg}. It is downloaded here at~\cite{GutenbergShakespeare}.
+
+The error rate uses BSER (Bit Steganography Error Rate) shown in Equation~\ref{eq:BSER}.
+
+\begin{equation}
+  \text{BSER} = \frac{\text{Number of redundant bits or missing bits}}{\text{Number of hidden information bits}} \times 100\%
+  \label{eq:BSER}
+\end{equation}
+
+\subsection{Different Embedding Strategies Comparison}
+
+Table~\ref{tab:diff_strategies_comparison} presents a performance comparison among different fusion strategies and different inference techniques. These techniques offer several ways to trade off between error rate and payload capacity. Figure~\ref{fig:steganography_result_mean_lsm_1} visualizes the fused attention and its corresponding embedding results of mean fusion strategy with 1 bit \textit{Least Significant Masking}. Even with Mean-LSM-1 strategy, a strategy with most payload capacity, the embedded image arouses little visual awareness of the hidden information. Moreover, with \textit{Permutative Straddling}, it is further possible to precisely handle the payload capacity during transmission. Just as shown in Table~\ref{tab:diff_strategies_comparison}, the payload of Mean-LSM-1 and Mean-LSM-2 are both controlled down to 1.2 bpp.
+
+\begin{table}
+  \centering
+  \begin{tabular}{lrr}
+    \toprule
+    Model             & BSER (\%) & Payload (bpp) \\
+    \midrule
+    Min-LSM-1         & 1.06\%    & 1.29          \\
+    Min-LSM-2         & 0.67\%    & 0.42          \\
+    Mean-LSM-1        & 2.22\%    & 3.89          \\
+    Mean-LSM-2        & 3.14\%    & 2.21          \\
+    Min-LSM-1-PS-0.6  & 0.74\%    & 0.60          \\
+    Min-LSM-1-PS-0.8  & 0.66\%    & 0.80          \\
+    Mean-LSM-1-PS-1.2 & 0.82\%    & 1.20          \\
+    Mean-LSM-2-PS-1.2 & 0.93\%    & 1.20          \\
+    \bottomrule
+  \end{tabular}
+  \caption{Different Embedding Strategies Comparison}%
+  \label{tab:diff_strategies_comparison}
+  \vspace{\baselineskip}
+  In the model name part, the value after LSM is the number of bits masked during embedding process and the value after PS is the maximum payload capacity the embedded image is limited to during permutative straddling.
+\end{table}
+
+\figureSteganographyResultMeanLSMOne%
+
+\subsection{Steganalysis Experiments}
+
+To ensure that our model is robust to steganalysis methods, we test our models using StegExpose~\cite{StegExpose} with linear interpolation of detection threshold from 0.00 to 1.00 with 0.01 as the step interval. The ROC curve is shown in Figure~\ref{fig:roc_curves} where true positive stands for an embedded image correctly identified that there are hidden data inside while false positive means that a clean figure is falsely classified as an embedded image. The green solid line with slope of 1 is the baseline of an intuitive random guessing classifier. The figure shows a comparison among our several models, StegNet~\cite{StegNet} and Baluja-2017~\cite{HIPS} plotted in dash-line-connected scatter data. It demonstrates that StegExpose can only work a little better than random guessing and most BASN models perform better than StegNet and Baluja-2017.
+
+Our model is also further examined with learning-based steganalysis methods including SPAM~\cite{SPAM}, SRM~\cite{SRM} and YedroudjNet~\cite{Yedroudj}. All of these models are trained with the same cover and embedded images as ours. Their corresponding ROC curves are shown in Figure~\ref{fig:roc_curves}. SRM~\cite{SRM} method works quite well on our model with a larger payload capacity, however in real-world applications we can always keep our dataset private and thus ensuring high security in resisting detection from learning-based steganalysis methods.
+
+\figureROCCurves%
+
+\subsection{Feature Distortion Analysis}
+
+Figure~\ref{fig:basn_feature_distortion_rate} is a histogram of the feature distortion rate before and after hidden information embedding, or namely the impact of steganography against the network's original task. A more concentrated distribution in the middle of the diagram indicates better preservation of the neural network's original features and as a result, a more consistent task result is ensured after steganography. As we can see in Figure~\ref{fig:basn_feature_distortion_rate} our model has little influence on the targeted neural-network-automated tasks, which in this case is classification. Even with the Mean-LSM-1 strategy, images that carry more than 3 bpp of hidden information are still very concentrated and take an average of only 2\% of distortion.
+
+\figureBASNFeatureDistortionRate%

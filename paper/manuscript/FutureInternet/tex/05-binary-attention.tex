@@ -1,0 +1,140 @@
+\section{Binary Attention Mechanism}
+
+Binary attention mechanism involves two attention models including image texture complexity (ITC) attention model and minimizing feature distortion (MFD) attention model. The attention mechanism in both models serve as a hint for steganography showing where to embed or extract and how much information the corresponding pixel might tolerate. ITC model mainly focuses on deceiving the human visual system from noticing the differences out of altered pixels. MFD model minimizes the high-level features extracted between clean and embedded images so that neural networks will not give out diverge results. With the help of MFD model, we align the latent space of the cover image and the embedded image, which therefore recreating or inferring from the embedded image what attention or how much capacity was available in the original cover image is possible.
+
+The embedding and extraction overall architecture are shown in Figure~\ref{fig:embedding_extraction_architecture} where both models are trained for the ability to generate their corresponding attentions. The training process and the details of each model is elaborated in Section~\ref{ssec:itc_model} and Section~\ref{ssec:mfd_model}. After two attentions are found with the binary attention mechanism, we may adopt several fusion strategies to create the final attention used for embedding and extraction. The fusion strategies are compared for their pros and cons in Section~\ref{sec:fusion_strategies}.
+
+\figureEmbeddingExtractionArchitecture%
+
+\subsection{Evaluation of Image Texture Complexity}
+
+To evaluate an image's texture complexity, variance is adapted in most approaches. However, using variance as the evaluation mechanism enforces very strong pixel dependencies. In other words, every pixel is correlated to all other pixels in the image.
+
+We propose variance pooling evaluation mechanism to relax cross-pixel dependencies (See Equation~\ref{eq:var_pool2d}). Variance pooling applies on patches but not the whole image to restrict the influence of pixel value alterations within the corresponding patches. Especially in the case of training when optimizing local textures to reduce its complexity, pixels within the current area should be most frequently changed while far distant ones are intended to be reserved for keeping the overall image contrast, brightness and visual patterns untouched.
+
+% eq:var_pool2d
+\begin{equation}
+  \mathrm{VarPool2d}(X_{i,j}) %
+    = \E_{k_i} \left( \E_{k_j} \left( X_{i+k_i,j+k_j}^2 \right) \right) %
+    - \E_{k_i} \left( \E_{k_j} {\left( X_{i+k_i,j+k_j} \right)}^2 \right)
+  \label{eq:var_pool2d}
+\end{equation}
+
+% eq:var_pool2d_cond
+\begin{equation*}%
+  k_i \in \left[ -\frac{n}{2}, \frac{n}{2} \right],~ k_j \in \left[ -\frac{n}{2}, \frac{n}{2} \right]
+  \label{eq:var_pool2d_cond}
+\end{equation*}
+
+In Equation~\ref{eq:var_pool2d}, \(X\) is a 2-dimensional random variable which can be either an image or a feature map and \(i, j\) are the indices of each dimension. Operator \(\mathrm{E}(\cdot)\) calculates the expectation of the random variable. VarPool2d applies similar kernel mechanism as other 2-dimensional pooling or convolution operations~\cite{MaxPooling,AlexNet} and \(k_i, k_j\) indicates the kernel indices of each dimension.
+
+To further show the impact of gradients updating between variance and variance pooling during backpropagation, we applied the gradients backpropagated directly to the image to visualize how gradients influences the image itself during training (See Equation~\ref{eq:varvap_comp_loss_variance},\ref{eq:varvap_comp_loss_varpool2d} for training loss and Figure~\ref{fig:var_vap_comparison} for the impact comparison).
+
+\begin{align}
+    \mathcal{L}_\mathrm{Variance}  &= \mathrm{Variance}(X) \label{eq:varvap_comp_loss_variance} \\
+    \mathcal{L}_\mathrm{VarPool2d} &= \E \left( \mathrm{VarPool2d}_{n=7} \left( X \right) \right) \label{eq:varvap_comp_loss_varpool2d}
+\end{align}
+
+\figureVarVapComparison%
+
+\subsection{ITC Attention Model}%
+\label{ssec:itc_model}
+
+ITC (Image Texture Complexity) attention model aims to embed information without being noticed by the human visual system, or in other words, making just noticeable difference (JND) to cover images to ensure the largest embedding payload capacity~\cite{JND}. In texture-rich areas, it is possible to alter pixels to carry hidden information without being noticed. Finding the ITC attention means finding the positions of the image pixels and their corresponding capacity that tolerate mutations.
+
+Here we introduce two concepts:
+\begin{enumerate}
+  \item A hyper-parameter \( \theta \) representing the ideal embedding payload capacity that the input image might achieve.
+  \item An ideal texture-free image \(C_{\theta}\) corresponding to the input image that is visually similar but with the lowest texture complexity possible regarding the restriction of at most \( \theta \) changes.
+\end{enumerate}
+
+With the help of these concepts, we can formulate the aim of ITC attention model as:
+
+For each cover image \(C\), ITC model \(f_{\itc}\) needs to find an attention \(A_{\itc} = f_{\itc}(C)\) to minimize the texture complexity evaluation function \(V_{\itc}\):
+
+\begin{align}
+  \text{minimize}   \quad & V_{\itc}(A_{\itc} \cdot C_{\theta} + (1 - A_{\itc}) \cdot C)
+  \label{eq:itc_minimize}                                                                         \\
+  \text{subject to} \quad & \frac{1}{N} \sum_{i}^{N} A_{\itc} \leq \theta \label{eq:itc_subject_to}
+\end{align}
+
+The \( \theta \) in Equation~\ref{eq:itc_subject_to} is used as an upper bound to limit down the attention area size. If trained without it, model \(f_{\itc}\) is free to output all-ones matrix \(A_{\itc}\) to acquire an optimal texture-free image. It is well-known that an image with the least amount of texture is a solid color image, which does not help find the correct texture-rich areas.
+
+\adamSingleFigureCS{0.3}{images/ITC/ITC-Model.png}{fig:itc_model}{%
+  ITC Attention Model Architecture
+}
+
+In actual training process, the detailed model architecture is shown in Figure~\ref{fig:itc_model} and two parts of the equation are slightly modified to ensure better training results. First, the ideal texture-free image \(C_{\theta}\) in Equation~\ref{eq:itc_minimize} does not indeed exist but is available through approximation nonetheless. In this paper median pooling with a kernel size of 7 is used to simulate the ideal texture-free image. It helps eliminate detailed textures within patches without touching object boundaries (See Figure~\ref{fig:image_smoothing_comparison} for comparison among different smoothing techniques). Second, we adopt soft bound limits in place of hard upper bound in forms of Equation~\ref{eq:itc_area_penalty} (visualized in Figure~\ref{fig:soft_area_penalty}). Soft limits help generate smoothed gradients and provide optimizing directions.
+
+\figureImageSmoothingComparison%
+
+% eq:itc_area_penalty
+\begin{equation}
+  \text{Area-Penalty}_\itc = {\E(A_{\itc})}^{3-2 \cdot \E(A_{\itc})}
+  \label{eq:itc_area_penalty}
+\end{equation}
+
+\figureItcAttentionEffect%
+
+The overall loss on training ITC attention model is listed in Equation~\ref{eq:itc_var_loss},\ref{eq:itc_overall_loss}, and Figure~\ref{fig:itc_attention_effect} shows the effect of ITC attention on image texture complexity reduction. The attention area reaches 21.2\% on average, and the weighted images gain an average of 86.3\% texture reduction in the validation dataset.
+
+% eq:itc_var_loss
+\begin{equation}
+  \mathrm{VarLoss} = \E \left( \mathrm{VarPool2d} \left( A_{\itc} \cdot C_{\theta} + (1 - A_{\itc}) \cdot C \right) \right)
+  \label{eq:itc_var_loss}
+\end{equation}
+
+% eq:itc_overall_loss
+\begin{equation}
+  \mathrm{Loss}_\itc = \lambda \cdot \text{VarLoss} + (1 - \lambda) \cdot \mathrm{Area-Penalty}_\itc
+  \label{eq:itc_overall_loss}
+\end{equation}
+
+\subsection{MFD Attention Model}%
+\label{ssec:mfd_model}
+
+MFD (Minimizing Feature Distortion) attention model aims to embed information with least impact on neural network extracted features. Its attention also indicates the position of image pixels and their corresponding capacity that tolerate mutations.
+
+For each cover image \(C\), MFD model \(f_{\mfd}\) needs to find an attention \(A_{\mfd} = f_{\mfd}(C)\) that minimizes the distance between cover image features \(f_{\nn}(C)\) and embedded image features \(f_{\nn}(S)\) after embedding information into cover image according to its attention.
+
+\begin{equation}
+  S = f_{\embed}(C, A_{\mfd})
+\end{equation}
+
+\begin{align}
+  \text{minimize}   \quad & \Lfmrl(f_{\nn}(C), f_{\nn}(S)) \\
+  \text{subject to} \quad & \alpha \leq \frac{1}{N} \sum_{i}^{N} A_{\mfd} \leq \beta
+\end{align}
+
+Here, \(C\) stands for the cover image and \(S\) stands for the corresponding embedded image. \(\Lfmrl(\cdot)\) is the feature map reconstruction loss and \( \alpha, \beta \) are thresholds limiting the area of attention map acting the same role as \( \theta \) in the ITC attention model.
+
+\adamSingleFigureCS{0.5}{images/MFD/MFD-Model-Detailed-2.png}{fig:mfd_detailed}{%
+  MFD Attention Model Architecture
+}
+
+\figureMFDModelOverall%
+ 
+\figureMfdEncoderDecoderBlock%
+
+The actual ways of training the MFD attention model is split into 2 phases (See Figure~\ref{fig:mfd_detailed}). The first training phase aims to initialize the weights of encoder blocks using the left path shown in Figure~\ref{fig:mfd_detailed} as an autoencoder. In the second training phase, all the weights of decoder blocks are reset and takes the right path to generate MFD attentions. The encoder and decoder block architectures are shown in Figure~\ref{fig:mfd_encoder_decoder_block}.
+
+The overall training pipeline in the second phase is shown in Figure~\ref{fig:mfd_model_overall}. The weights of two MFD blocks colored in purple are shared while the weights of two task specific neural network blocks colored in yellow are frozen. In the training process, task specific neural network works only as a feature extractor and therefore it can be simply extended to multiple tasks by reshaping and concatenating feature maps together. Here we adopt ResNet-18~\cite{ResNet} as an example for minimizing embedding distortion to the classification task.
+
+The overall loss on training MFD attention model (phase 2) is listed in Equation~\ref{eq:mfd_overall_loss}.
+The \( \Lfmrl \) (Feature Map Reconstruction Loss) uses \(L_2\) loss to reconstruct between cover image extracted feature maps and embedded ones. The \( \Lcerl \) (Cover Embedded image Reconstruction Loss) and \( \Latrl \) (Attention Reconstruction Loss) uses \(L_1\) loss to reconstruct between the cover images and the embedded images and their corresponding attentions. The \( \Latap \) (ATtention Area Penalty) also applies soft bound limit in forms of Equation~\ref{eq:mfd_area_penalty} (visualized in Figure~\ref{fig:soft_area_penalty}). The visual effect of MFD attention embedding with random noise is shown in Figure~\ref{fig:mfd_attention_effect}.
+
+% eq:mfd_overall_loss
+\begin{equation}
+  \mathrm{Loss}_\mfd = \Lfmrl + \Lcerl + \Latrl + \Latap
+  \label{eq:mfd_overall_loss}
+\end{equation}
+
+% eq:mfd_area_penalty
+\begin{equation}
+  \text{Area-Penalty}_\mfd = \frac{1}{2} \cdot {(1.1 \cdot \E(A_{\mfd}))}^{8 \cdot \E(A_{\mfd}) - 0.1}
+  \label{eq:mfd_area_penalty}
+\end{equation}
+
+\figureSoftAreaPenalty%
+
+\figureMfdAttentionEffect%
