@@ -1,0 +1,38 @@
+\documentclass[futureinternet,article,submit,moreauthors]{Definitions/mdpi}
+
+\usepackage{subcaption}
+
+\firstpage{1}
+\makeatletter
+\setcounter{page}{\@firstpage}
+\makeatother
+\pubvolume{xx}
+\issuenum{1}
+\articlenumber{5}
+\pubyear{2020}
+\copyrightyear{2019}
+%\externaleditor{Academic Editor: name}
+\history{Received: date; Accepted: date; Published: date}
+%\updates{yes} % If there is an update available, un-comment this line
+
+%\continuouspages{yes}
+
+%\pdfoutput=1
+
+\input{tex/00-macros.tex}
+\input{tex/01-title-author.tex}
+\input{tex/02-abstract.tex}
+
+\begin{document}
+
+\input{tex/03-introduction.tex}
+\input{tex/05-binary-attention.tex}
+\input{tex/06-fusion-and-finetune.tex}
+\input{tex/07-experiments.tex}
+\input{tex/08-conclusion.tex}
+
+\reftitle{References}
+\externalbibliography{yes}
+\bibliography{main}
+
+\end{document}

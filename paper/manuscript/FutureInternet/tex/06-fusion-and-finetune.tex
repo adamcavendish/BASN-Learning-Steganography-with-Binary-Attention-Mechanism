@@ -1,0 +1,23 @@
+\section{Fusion Strategies, Finetune Process and Inference Techniques}
+
+The fusion strategies help merge ITC and MFD attention models into one attention model, and thus they are substantial to be consistent and stable. In this paper, two fusion strategies being minima fusion and mean fusion are put forth as Equation~\ref{eq:min_fusion} and~\ref{eq:mean_fusion}. Minima fusion strategy aims to improve security while mean fusion strategy generates more payload capacity for embedding.
+
+\begin{equation}
+  A_{\f} = \min(A_{\itc}, A_{\mfd})
+  \label{eq:min_fusion}
+\end{equation}
+
+\begin{equation}
+  A_{\f} = \frac{1}{2}(A_{\itc}, A_{\mfd})
+  \label{eq:mean_fusion}
+\end{equation}
+
+After a fusion strategy is applied, finetuning process is required to improve attention reconstruction on embedded images. The finetune process is split into two phases. In the first phase, the ITC model is finetuned as Figure~\ref{fig:finetune_first_phase}. The two ITC model colored in purple shares the same network weights and the MFD model weights are freezed. Besides from the image texture complexity loss (Equation~\ref{eq:itc_var_loss}) and the ITC area penalty (Equation~\ref{eq:itc_area_penalty}), the loss additionally involves an attention reconstruction loss using \(L_1\) loss similar to \( \Latrl \) in Equation~\ref{eq:mfd_overall_loss}. In the second phase, the new ITC model is freezed, and the MFD model is finetuned using its original loss (Equation~\ref{eq:mfd_overall_loss}).
+
+\figureFinetuneFirstPhase%
+
+The ITC model, after finetune, appears to be more interested in the texture-complex areas while ignores the areas that might introduce noises into the attention (See Figure~\ref{fig:itc_attention_finetune}).
+
+\figureItcAttentionFinetune%
+
+When using the model for inference after finetuning, two extra techniques are proposed to strengthen steganography security. The first technique is named \textit{Least Significant Masking (LSM)} which masks the lowest several bits of the attention during embedding. After the hidden information is embedded, the masked bits are restored to the original data to disturb the steganalysis methods. The second technique is called \textit{Permutative Straddling}, which sacrifices some payload capacity to straddle between hidden bits and cover bits~\cite{F5Stego}. It is achieved by scattering the effective payload bit locations across the overall embedded locations using a random seed. The overall hidden bits are further re-arranged sequentially in the effective payload bit locations. The random seed is required to restore the hidden data.
